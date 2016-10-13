@@ -7,3 +7,6 @@ branches:
 install: true
 script:
 - go test $(go list ./... | grep -v /vendor/)
+notifications:
+  webhooks:
+  - 'https://beekeeper.octoblu.com/webhooks/travis:ci'
