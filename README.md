@@ -1,2 +1,2 @@
 # beekeeper-updater-swarm
-Update Docker Swarm from Beekeeper
+Update Swarm from Beekeeper

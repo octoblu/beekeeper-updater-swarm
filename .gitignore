@@ -22,3 +22,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+beekeeper-updater-swarm
+entrypoint/beekeeper-updater-swarm
