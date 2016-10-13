@@ -12,6 +12,7 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
+	"github.com/docker/engine-api/types/swarm"
 	De "github.com/tj/go-debug"
 )
 
@@ -40,7 +41,7 @@ func New(dockerClient client.APIClient, beekeeperURI string) *Deployer {
 // Run watches the redis queue and starts taking action
 func (deployer *Deployer) Run() error {
 	filters := filters.NewArgs()
-	// filters.Add("label", "octoblu.beekeeper.update")
+	filters.Add("label", "octoblu.beekeeper.update")
 	options := types.ServiceListOptions{
 		Filter: filters,
 	}
@@ -55,23 +56,18 @@ func (deployer *Deployer) Run() error {
 		dockerURL := deployer.getLatestDockerURL(owner, repo)
 
 		if dockerURL != "" && currentDockerURL != dockerURL {
-			deployer.deploy(repo, dockerURL)
+			deployer.deploy(service, dockerURL)
 		}
 	}
 	return nil
 }
 
-func (deployer *Deployer) deploy(repo string, dockerURL string) error {
+func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error {
 	var err error
 	dockerClient := deployer.dockerClient
 
 	ctx := context.Background()
 	updateOpts := types.ServiceUpdateOptions{}
-
-	service, _, err := dockerClient.ServiceInspectWithRaw(ctx, repo)
-	if err != nil {
-		return err
-	}
 
 	service.Spec.TaskTemplate.ContainerSpec.Image = dockerURL
 
