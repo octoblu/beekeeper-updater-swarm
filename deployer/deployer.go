@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
@@ -52,11 +53,28 @@ func (deployer *Deployer) Run() error {
 	}
 	for _, service := range services {
 		currentDockerURL := service.Spec.TaskTemplate.ContainerSpec.Image
+		if currentDockerURL == "" {
+			log.Println("Could not get currentDockerURL for service", service.ID)
+			continue
+		}
+
 		owner, repo, _ := deployer.parseDockerURL(currentDockerURL)
-		dockerURL := deployer.getLatestDockerURL(owner, repo)
+		if owner == "" || repo == "" {
+			log.Println("Could not parse docker URL", currentDockerURL, service.ID)
+			continue
+		}
+
+		dockerURL, err := deployer.getLatestDockerURL(owner, repo)
+		if err != nil {
+			log.Printf("Error getting latest docker URL for %v/%v: %v", owner, repo, err.Error())
+			continue
+		}
 
 		if dockerURL != "" && currentDockerURL != dockerURL {
-			deployer.deploy(service, dockerURL)
+			err = deployer.deploy(service, dockerURL)
+			if err != nil {
+				log.Println("Error on deploy", err.Error())
+			}
 		}
 	}
 	return nil
@@ -79,7 +97,7 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 	return nil
 }
 
-func (deployer *Deployer) getLatestDockerURL(owner, repo string) string {
+func (deployer *Deployer) getLatestDockerURL(owner, repo string) (string, error) {
 	var metadata RequestMetadata
 
 	url := fmt.Sprintf("%s/deployments/%s/%s/latest", deployer.beekeeperURI, owner, repo)
@@ -87,21 +105,24 @@ func (deployer *Deployer) getLatestDockerURL(owner, repo string) string {
 	res, err := http.Get(url)
 
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
+	if len(body) == 0 {
+		return "", nil
+	}
+
 	err = json.Unmarshal(body, &metadata)
-
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 
-	return metadata.DockerURL
+	return metadata.DockerURL, nil
 }
 
 func (deployer *Deployer) parseDockerURL(dockerURL string) (string, string, string) {
