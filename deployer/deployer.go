@@ -102,10 +102,18 @@ func (deployer *Deployer) getLatestDockerURL(owner, repo string) (string, error)
 
 	url := fmt.Sprintf("%s/deployments/%s/%s/latest", deployer.beekeeperURI, owner, repo)
 
+	debug("get latest docker url %s", url)
+
 	res, err := http.Get(url)
 
 	if err != nil {
+		debug("got error from beekeeper-service %v", err)
 		return "", err
+	}
+
+	debug("get latest: got status code %v", res.StatusCode)
+	if res.StatusCode != 200 {
+		return "", fmt.Errorf("Invalid response status code %v", res.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -113,6 +121,7 @@ func (deployer *Deployer) getLatestDockerURL(owner, repo string) (string, error)
 	if err != nil {
 		return "", err
 	}
+
 	if len(body) == 0 {
 		return "", nil
 	}

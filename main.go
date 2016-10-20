@@ -46,6 +46,8 @@ func run(context *cli.Context) {
 
 	dockerClient := getDockerClient(dockerURI)
 
+	debug("BEEKEEPER_URI: %s", beekeeperURI)
+	debug("DOCKER_HOST: %s", dockerURI)
 	theDeployer := deployer.New(dockerClient, beekeeperURI)
 	sigTerm := make(chan os.Signal)
 	signal.Notify(sigTerm, syscall.SIGTERM)
