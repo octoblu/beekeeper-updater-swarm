@@ -17,7 +17,7 @@ import (
 	De "github.com/tj/go-debug"
 )
 
-var debug = De.Debug("governator:deployer")
+var debug = De.Debug("beekeeper-updater-swarm:deployer")
 
 // Deployer watches a redis queue
 // and deploys services using Etcd
@@ -53,10 +53,13 @@ func (deployer *Deployer) Run() error {
 	}
 	for _, service := range services {
 		currentDockerURL := service.Spec.TaskTemplate.ContainerSpec.Image
+
 		if currentDockerURL == "" {
 			log.Println("Could not get currentDockerURL for service", service.ID)
 			continue
 		}
+
+		debug("found service %s", currentDockerURL)
 
 		owner, repo, _ := deployer.parseDockerURL(currentDockerURL)
 		if owner == "" || repo == "" {
