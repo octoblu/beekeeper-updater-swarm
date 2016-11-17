@@ -1,23 +1,40 @@
-box: golang:1.7
 build:
+  box: golang:1.7
   steps:
   - script:
-    name: link it
+    name: link-it
     code: |
       mkdir -p $GOPATH/src/github.com/octoblu
       ln -sf $WERCKER_SOURCE_DIR $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
   - script:
-    name: go build
-    code: CGO_ENABLED=0 go build -a -ldflags '-s' -installsuffix cgo -o beekeeper-updater-swarm .
+    name: go-build
+    code: CGO_ENABLED=0 go build -a -ldflags '-s' -o beekeeper-updater-swarm .
     cwd: $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
   - script:
-    name: copy binary
+    name: copy-binary
     code: cp beekeeper-updater-swarm "$WERCKER_OUTPUT_DIR"
 deploy:
+  box: centurylink/ca-certs
   steps:
+  # - script:
+  #   name: is-tagged-release
+  #   code: git describe &> /dev/null || exit 1
+  # - script:
+  #   name: is-valid-release
+  #   code: |
+  #     RAW_VERSION="$(git describe --tags)"
+  #     VERSION="${RAW_VERSION%%\-*}"
+  #     echo "Checking version $VERSION"
+  #     echo "$VERSION" | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+' > /dev/null
+  #     echo "$VERSION" > "${WERCKER_ROOT}/VERSION"
+  #     echo "Releasing: $VERSION"
+  - script:
+    name: test-release
+    code: echo "test" > "${WERCKER_ROOT}/VERSION"
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
+    tag: "$(cat "${WERCKER_ROOT}/VERSION")"
     cmd: ./beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
