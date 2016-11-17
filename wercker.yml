@@ -38,7 +38,7 @@ deploy:
   - script:
     name: test-release
     code: |
-      echo $VERSION
+      VERSION='dev-1'
       export VERSION
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
