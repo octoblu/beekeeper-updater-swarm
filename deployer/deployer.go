@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -52,35 +53,58 @@ func (deployer *Deployer) Run() error {
 		return err
 	}
 	for _, service := range services {
-		currentDockerURL := service.Spec.TaskTemplate.ContainerSpec.Image
-
-		if currentDockerURL == "" {
-			log.Println("Could not get currentDockerURL for service", service.ID)
-			continue
-		}
-
-		debug("found service %s", currentDockerURL)
-
-		owner, repo, _ := deployer.parseDockerURL(currentDockerURL)
-		if owner == "" || repo == "" {
-			log.Println("Could not parse docker URL", currentDockerURL, service.ID)
-			continue
-		}
-
-		dockerURL, err := deployer.getLatestDockerURL(owner, repo)
+		shouldUpdate, err := deployer.shouldUpdateService(service)
 		if err != nil {
-			log.Printf("Error getting latest docker URL for %v/%v: %v", owner, repo, err.Error())
-			continue
+			return err
 		}
-
-		if dockerURL != "" && currentDockerURL != dockerURL {
-			err = deployer.deploy(service, dockerURL)
+		debug("found service %s", getCurrentDockerURL(service))
+		if shouldUpdate {
+			err = deployer.updateService(service)
 			if err != nil {
-				log.Println("Error on deploy", err.Error())
+				return err
 			}
 		}
 	}
 	return nil
+}
+
+func (deployer *Deployer) shouldUpdateService(service swarm.Service) (bool, error) {
+	if getCurrentDockerURL(service) == "" {
+		log.Println("Could not get currentDockerURL for service", service.ID)
+		return false, nil
+	}
+	if isUpdateInProcess(service) {
+		log.Println("Update already in progress", service.ID)
+		return false, nil
+	}
+	return true, nil
+}
+
+func (deployer *Deployer) updateService(service swarm.Service) error {
+	currentDockerURL := getCurrentDockerURL(service)
+	owner, repo, _ := deployer.parseDockerURL(currentDockerURL)
+	if owner == "" || repo == "" {
+		return fmt.Errorf("Could not parse docker URL %v %v", currentDockerURL, service.ID)
+	}
+	dockerURL, err := deployer.getLatestDockerURL(owner, repo)
+	if err != nil {
+		return fmt.Errorf("Error getting latest docker URL for %v/%v: %v", owner, repo, err.Error())
+	}
+	if dockerURL == "" {
+		log.Println("No latest docker url from the beekeeper service")
+		return nil
+	}
+	if doesDockerURLMatchCurrent(dockerURL, service) {
+		return nil
+	}
+	if !didLastUpdatePass(service) {
+		log.Println("Last update failed", service.ID)
+		if doesDockerURLMatchLast(dockerURL, service) {
+			log.Println("Update already has been done", service.ID)
+			return nil
+		}
+	}
+	return deployer.deploy(service, dockerURL)
 }
 
 func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error {
@@ -91,6 +115,10 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 	updateOpts := types.ServiceUpdateOptions{}
 
 	service.Spec.TaskTemplate.ContainerSpec.Image = dockerURL
+	currentDate := time.Now().Format(time.RFC3339)
+	// Parsing example: time.Parse(time.RFC3339, currentDate)
+	service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastDockerURL"] = dockerURL
+	service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastUpdatedAt"] = currentDate
 
 	err = dockerClient.ServiceUpdate(ctx, service.ID, service.Version, service.Spec, updateOpts)
 	if err != nil {
@@ -162,4 +190,44 @@ func (deployer *Deployer) parseDockerURL(dockerURL string) (string, string, stri
 	}
 
 	return owner, repo, tag
+}
+
+func getCurrentDockerURL(service swarm.Service) string {
+	return service.Spec.TaskTemplate.ContainerSpec.Image
+}
+
+func getLastUpdatedAt(service swarm.Service) (time.Time, error) {
+	lastUpdatedAt := service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastUpdatedAt"]
+	return time.Parse(time.RFC3339, lastUpdatedAt)
+}
+
+func getLastDockerURL(service swarm.Service) string {
+	return service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastDockerURL"]
+}
+
+func isUpdateInProcess(service swarm.Service) bool {
+	return service.UpdateStatus.State == swarm.UpdateStateUpdating
+}
+
+func didLastUpdatePass(service swarm.Service) bool {
+	if service.UpdateStatus.State != swarm.UpdateStatePaused {
+		return true
+	}
+	return false
+}
+
+func doesDockerURLMatchCurrent(dockerURL string, service swarm.Service) bool {
+	currentDockerURL := getCurrentDockerURL(service)
+	if currentDockerURL == "" {
+		return false
+	}
+	return dockerURL == currentDockerURL
+}
+
+func doesDockerURLMatchLast(dockerURL string, service swarm.Service) bool {
+	lastDockerURL := getLastDockerURL(service)
+	if lastDockerURL == "" {
+		return false
+	}
+	return dockerURL == lastDockerURL
 }

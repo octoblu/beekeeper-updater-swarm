@@ -25,3 +25,5 @@ _testmain.go
 
 beekeeper-updater-swarm
 entrypoint/beekeeper-updater-swarm
+coverage.txt
+.wercker

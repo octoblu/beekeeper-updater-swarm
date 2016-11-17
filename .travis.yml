@@ -6,7 +6,9 @@ branches:
   - /^v[0-9]/
 install: true
 script:
-- go test $(go list ./... | grep -v /vendor/)
+- ./go.test.sh
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 notifications:
   webhooks:
   - 'https://beekeeper.octoblu.com/webhooks/travis:ci'

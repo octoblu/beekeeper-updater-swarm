@@ -42,4 +42,5 @@ main() {
   copy    || panic "copy failed"
   package || panic "package failed"
 }
+
 main

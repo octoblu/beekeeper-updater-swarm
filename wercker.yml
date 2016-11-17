@@ -1,0 +1,23 @@
+box: golang:1.7
+build:
+  steps:
+  - script:
+    name: link it
+    code: |
+      mkdir -p $GOPATH/src/github.com/octoblu
+      ln -sf $WERCKER_SOURCE_DIR $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
+  - script:
+    name: go build
+    code: CGO_ENABLED=0 go build -a -ldflags '-s' -installsuffix cgo -o beekeeper-updater-swarm .
+    cwd: $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
+  - script:
+    name: copy binary
+    code: cp beekeeper-updater-swarm "$WERCKER_OUTPUT_DIR"
+deploy:
+  steps:
+  - internal/docker-scratch-push:
+    username: $DOCKER_HUB_USERNAME
+    password: $DOCKER_HUB_PASSWORD
+    cmd: ./beekeeper-updater-swarm
+    repository: octoblu/beekeeper-updater-swarm
+    registry: https://registry.hub.docker.com

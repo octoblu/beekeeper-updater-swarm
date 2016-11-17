@@ -1,5 +1,7 @@
 .git
-governator
-entrypoint/governator
+beekeeper-updater-swarm
+entrypoint/beekeeper-updater-swarm
 build.sh
 README.md
+coverage.txt
+.wercker
