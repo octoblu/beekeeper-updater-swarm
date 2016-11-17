@@ -1,6 +1,11 @@
+box: golang:1.7
 build:
-  box: golang:1.7
   steps:
+  - script:
+    name: install-certs
+    code: |
+      curl --fail -sSL -o ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
+      cp ca-certificates.crt /etc/ssl/certs/
   - script:
     name: link-it
     code: |
@@ -14,7 +19,6 @@ build:
     name: copy-binary
     code: cp beekeeper-updater-swarm "$WERCKER_OUTPUT_DIR"
 deploy:
-  box: centurylink/ca-certs
   steps:
   # - script:
   #   name: is-tagged-release
