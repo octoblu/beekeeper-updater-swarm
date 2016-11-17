@@ -25,7 +25,7 @@ deploy:
       apk update && apk add ca-certificates
   - script:
     name: prepare
-    code: mv beekeeper-updater-swarm beekeeper-updater-swarm
+    code: mv ./beekeeper-updater-swarm /beekeeper-updater-swarm
   # - script:
   #   name: is-tagged-release
   #   code: git describe &> /dev/null || exit 1
@@ -41,7 +41,7 @@ deploy:
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: 'dev-3'
-    cmd: ./beekeeper-updater-swarm
+    tag: 'dev-4'
+    cmd: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
