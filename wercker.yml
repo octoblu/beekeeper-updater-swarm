@@ -23,6 +23,9 @@ deploy:
     code: |
       echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
       apk update && apk add ca-certificates
+  - script:
+    name: prepare
+    code: mv beekeeper-updater-swarm beekeeper-updater-swarm
   # - script:
   #   name: is-tagged-release
   #   code: git describe &> /dev/null || exit 1
@@ -38,7 +41,7 @@ deploy:
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: 'dev-2'
+    tag: 'dev-3'
     cmd: ./beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
