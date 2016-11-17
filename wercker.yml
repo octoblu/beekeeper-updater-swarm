@@ -38,7 +38,7 @@ deploy:
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: 'dev'
+    tag: 'dev-2'
     cmd: ./beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
