@@ -30,11 +30,13 @@ deploy:
   #     echo "Releasing: $VERSION"
   - script:
     name: test-release
-    code: echo "test" > "${WERCKER_ROOT}/VERSION"
+    code: |
+      echo $VERSION
+      export VERSION
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: "$(cat "${WERCKER_ROOT}/VERSION")"
+    tag: $VERSION
     cmd: ./beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
