@@ -35,15 +35,10 @@ deploy:
   #     echo "$VERSION" | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+' > /dev/null
   #     echo "$VERSION" > "${WERCKER_ROOT}/VERSION"
   #     echo "Releasing: $VERSION"
-  - script:
-    name: test-release
-    code: |
-      VERSION='dev'
-      export VERSION
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: $VERSION
+    tag: 'dev'
     cmd: ./beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
