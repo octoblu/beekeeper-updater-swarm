@@ -8,7 +8,7 @@ build:
       ln -sf $WERCKER_SOURCE_DIR $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
   - script:
     name: go-build
-    code: CGO_ENABLED=0 go build -a -ldflags '-s' -o "${WERCKER_OUTPUT_DIR}/beekeeper-updater-swarm" .
+    code: CGO_ENABLED=0 go build -a -ldflags '-s' -o "${WERCKER_OUTPUT_DIR}/beekeeper-updater-swarm"
     cwd: $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
 deploy:
   box:
@@ -38,7 +38,7 @@ deploy:
   - internal/docker-scratch-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: 'dev-5'
-    cmd: /beekeeper-updater-swarm
+    tag: 'dev-6'
+    entrypoint: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
