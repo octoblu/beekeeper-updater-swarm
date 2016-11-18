@@ -1,25 +1,16 @@
 #!/bin/bash
 
 APP_NAME=beekeeper-updater-swarm
-TMP_DIR=/tmp/$APP_NAME
+TMP_DIR="/tmp/$APP_NAME-build"
 IMAGE_NAME=local/$APP_NAME
+
+init() {
+  rm -rf $TMP_DIR/ && \
+    mkdir -p $TMP_DIR/
+}
 
 build() {
   docker build --tag $IMAGE_NAME:built .
-}
-
-copy() {
-  cp $TMP_DIR/$APP_NAME .
-  cp $TMP_DIR/$APP_NAME entrypoint/
-}
-
-init() {
-  rm -rf $TMP_DIR/ \
-   && mkdir -p $TMP_DIR/
-}
-
-package() {
-  docker build --tag $IMAGE_NAME:latest entrypoint
 }
 
 run() {
@@ -27,6 +18,15 @@ run() {
     --volume $TMP_DIR:/export/ \
     $IMAGE_NAME:built \
       cp $APP_NAME /export
+}
+
+copy() {
+  cp $TMP_DIR/$APP_NAME .
+  cp $TMP_DIR/$APP_NAME entrypoint/
+}
+
+package() {
+  docker build --tag $IMAGE_NAME:latest entrypoint
 }
 
 panic() {

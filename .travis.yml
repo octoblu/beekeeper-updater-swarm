@@ -6,7 +6,6 @@ branches:
   - /^v[0-9]/
 install: true
 script:
-- echo "I don't want it to deploy" && exit 1
 - ./go.test.sh
 after_success:
   - bash <(curl -s https://codecov.io/bash)

@@ -2,6 +2,8 @@
 beekeeper-updater-swarm
 entrypoint/beekeeper-updater-swarm
 build.sh
+deploy.sh
 README.md
 coverage.txt
 .wercker
+tmp
