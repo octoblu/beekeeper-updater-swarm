@@ -23,19 +23,23 @@ deploy:
     name: prepare
     code: mv ./beekeeper-updater-swarm /beekeeper-updater-swarm
   - script:
-    name: get-release-tag
-    code: |
-      export RELEASE_TAG=$(cat $WERCKER_ROOT/.release_tag)
-      echo "Release tag: ${RELEASE_TAG}"
-  - script:
     name: install-packages
     code: |
       echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
       apk update && apk add ca-certificates
+  - script:
+    name: get-release-tag
+    code: |
+      if [ ! -f "$WERCKER_ROOT/.release_tag" ]; then
+        echo "Missing .release_tag file"
+        return 1
+      fi
+      export RELEASE_TAG=$(cat $WERCKER_ROOT/.release_tag)
+      echo "Release tag: ${RELEASE_TAG}"
   - internal/docker-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
     tag: $RELEASE_TAG
     entrypoint: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
-    registry: https://registry.hub.docker.com
+    registry: https://registry.hub.docker.com/v2
