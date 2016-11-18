@@ -39,7 +39,7 @@ deploy:
   - internal/docker-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: $RELEASE_TAG
+    tags: $RELEASE_TAG
     entrypoint: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com/v2
