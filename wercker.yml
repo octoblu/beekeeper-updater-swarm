@@ -2,6 +2,9 @@ build:
   box: golang:1.7
   steps:
   - script:
+    name: store-tag
+    code: git describe --contains $WERCKER_GIT_COMMIT > "${WERCKER_OUTPUT_DIR}/GIT_TAG"
+  - script:
     name: link-it
     code: |
       mkdir -p $GOPATH/src/github.com/octoblu
@@ -19,16 +22,10 @@ deploy:
     name: prepare
     code: mv ./beekeeper-updater-swarm /beekeeper-updater-swarm
   - script:
-    name: is-tagged-release
-    code: |
-      git describe &> /dev/null || exit 1
-  - script:
     name: is-valid-release
     code: |
-      echo "Checking version $GIT_TAG"
-      RAW_TAG="$(git describe --tags)"
-      GIT_TAG="${RAW_TAG%%\-*}"
-      echo "$GIT_TAG" | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+' > /dev/null
+      GIT_TAG="$(cat "$WERCKER_ROOT/GIT_TAG")"
+      echo "$GIT_TAG" | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+'
       export GIT_TAG
   - script:
     name: install-packages
