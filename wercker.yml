@@ -37,6 +37,7 @@ deploy:
       export RELEASE_TAG=$(cat $WERCKER_ROOT/.release_tag)
       echo "Release tag: ${RELEASE_TAG}"
   - internal/docker-push:
+    disable-sync: true
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
     tags: $RELEASE_TAG
