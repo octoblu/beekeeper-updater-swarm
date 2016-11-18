@@ -74,7 +74,7 @@ func (deployer *Deployer) shouldUpdateService(service swarm.Service) (bool, erro
 		return false, nil
 	}
 	if isUpdateInProcess(service) {
-		log.Println("Update already in progress", service.ID)
+		debug("Update already in progress", service.ID)
 		return false, nil
 	}
 	return true, nil
@@ -98,9 +98,9 @@ func (deployer *Deployer) updateService(service swarm.Service) error {
 		return nil
 	}
 	if !didLastUpdatePass(service) {
-		log.Println("Last update failed", service.ID)
+		debug("Last update failed", service.ID)
 		if doesDockerURLMatchLast(dockerURL, service) {
-			log.Println("Update already has been done", service.ID)
+			debug("Update already has been done", service.ID)
 			return nil
 		}
 	}
@@ -116,10 +116,11 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 
 	service.Spec.TaskTemplate.ContainerSpec.Image = dockerURL
 	currentDate := time.Now().Format(time.RFC3339)
-	// Parsing example: time.Parse(time.RFC3339, currentDate)
+	if service.Spec.TaskTemplate.ContainerSpec.Labels == nil {
+		service.Spec.TaskTemplate.ContainerSpec.Labels = map[string]string{}
+	}
 	service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastDockerURL"] = dockerURL
 	service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastUpdatedAt"] = currentDate
-
 	err = dockerClient.ServiceUpdate(ctx, service.ID, service.Version, service.Spec, updateOpts)
 	if err != nil {
 		return err

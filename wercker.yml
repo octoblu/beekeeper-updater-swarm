@@ -16,6 +16,18 @@ deploy:
     cmd: /bin/sh
   steps:
   - script:
+    name: is-tagged-release
+    code: git describe &> /dev/null || exit 1
+  - script:
+    name: is-valid-release
+    code: |
+      RAW_TAG="$(git describe --tags)"
+      GIT_TAG="${RAW_TAG%%\-*}"
+      echo "Checking version $GIT_TAG"
+      echo "$GIT_TAG" | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+' > /dev/null
+      echo "Releasing: $GIT_TAG"
+      export GIT_TAG
+  - script:
     name: install-packages
     code: |
       echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
@@ -23,22 +35,10 @@ deploy:
   - script:
     name: prepare
     code: mv ./beekeeper-updater-swarm /beekeeper-updater-swarm
-  # - script:
-  #   name: is-tagged-release
-  #   code: git describe &> /dev/null || exit 1
-  # - script:
-  #   name: is-valid-release
-  #   code: |
-  #     RAW_VERSION="$(git describe --tags)"
-  #     VERSION="${RAW_VERSION%%\-*}"
-  #     echo "Checking version $VERSION"
-  #     echo "$VERSION" | grep '^v[0-9]\+\.[0-9]\+\.[0-9]\+' > /dev/null
-  #     echo "$VERSION" > "${WERCKER_ROOT}/VERSION"
-  #     echo "Releasing: $VERSION"
   - internal/docker-push:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
-    tag: 'dev-7'
+    tag: $VERSION
     entrypoint: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com
