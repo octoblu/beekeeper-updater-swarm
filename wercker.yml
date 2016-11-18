@@ -40,6 +40,7 @@ deploy:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
     tags: $RELEASE_TAG
+    disable-sync: true
     entrypoint: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com/v2
