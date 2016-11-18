@@ -45,7 +45,7 @@ func run(context *cli.Context) {
 	dockerURI, beekeeperURI := getOpts(context)
 
 	dockerClient := getDockerClient(dockerURI)
-
+	debug("running version %v", version())
 	debug("BEEKEEPER_URI: %s", beekeeperURI)
 	debug("DOCKER_HOST: %s", dockerURI)
 	theDeployer := deployer.New(dockerClient, beekeeperURI)

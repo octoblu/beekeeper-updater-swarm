@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -70,7 +69,7 @@ func (deployer *Deployer) Run() error {
 
 func (deployer *Deployer) shouldUpdateService(service swarm.Service) (bool, error) {
 	if getCurrentDockerURL(service) == "" {
-		log.Println("Could not get currentDockerURL for service", service.ID)
+		debug("Could not get currentDockerURL for service", service.ID)
 		return false, nil
 	}
 	if isUpdateInProcess(service) {
@@ -91,10 +90,11 @@ func (deployer *Deployer) updateService(service swarm.Service) error {
 		return fmt.Errorf("Error getting latest docker URL for %v/%v: %v", owner, repo, err.Error())
 	}
 	if dockerURL == "" {
-		log.Println("No latest docker url from the beekeeper service")
+		debug("No latest docker url from the beekeeper service")
 		return nil
 	}
 	if doesDockerURLMatchCurrent(dockerURL, service) {
+		debug("docker url is the same")
 		return nil
 	}
 	if !didLastUpdatePass(service) {
@@ -116,11 +116,11 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 
 	service.Spec.TaskTemplate.ContainerSpec.Image = dockerURL
 	currentDate := time.Now().Format(time.RFC3339)
-	if service.Spec.TaskTemplate.ContainerSpec.Labels == nil {
-		service.Spec.TaskTemplate.ContainerSpec.Labels = map[string]string{}
+	if service.Spec.Labels == nil {
+		service.Spec.Labels = make(map[string]string)
 	}
-	service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastDockerURL"] = dockerURL
-	service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastUpdatedAt"] = currentDate
+	service.Spec.Labels["octoblu.beekeeper.lastDockerURL"] = dockerURL
+	service.Spec.Labels["octoblu.beekeeper.lastUpdatedAt"] = currentDate
 	err = dockerClient.ServiceUpdate(ctx, service.ID, service.Version, service.Spec, updateOpts)
 	if err != nil {
 		return err
@@ -198,12 +198,18 @@ func getCurrentDockerURL(service swarm.Service) string {
 }
 
 func getLastUpdatedAt(service swarm.Service) (time.Time, error) {
-	lastUpdatedAt := service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastUpdatedAt"]
+	if service.Spec.Labels == nil {
+		return time.Now(), nil
+	}
+	lastUpdatedAt := service.Spec.Labels["octoblu.beekeeper.lastUpdatedAt"]
 	return time.Parse(time.RFC3339, lastUpdatedAt)
 }
 
 func getLastDockerURL(service swarm.Service) string {
-	return service.Spec.TaskTemplate.ContainerSpec.Labels["octoblu.beekeeper.lastDockerURL"]
+	if service.Spec.Labels == nil {
+		return ""
+	}
+	return service.Spec.Labels["octoblu.beekeeper.lastDockerURL"]
 }
 
 func isUpdateInProcess(service swarm.Service) bool {
