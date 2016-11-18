@@ -16,7 +16,7 @@ build:
     cwd: $GOPATH/src/github.com/octoblu/beekeeper-updater-swarm
 deploy:
   box:
-    id: alpine
+    id: canopytax/alpine
     cmd: /bin/sh
   steps:
   - script:
@@ -31,7 +31,7 @@ deploy:
     name: get-release-tag
     code: |
       if [ ! -f "$WERCKER_ROOT/.release_tag" ]; then
-        echo "Missing .release_tag file"
+        echo "ERROR: Missing .release_tag file"
         return 1
       fi
       export RELEASE_TAG=$(cat $WERCKER_ROOT/.release_tag)
@@ -40,7 +40,6 @@ deploy:
     username: $DOCKER_HUB_USERNAME
     password: $DOCKER_HUB_PASSWORD
     tags: $RELEASE_TAG
-    disable-sync: true
     entrypoint: /beekeeper-updater-swarm
     repository: octoblu/beekeeper-updater-swarm
     registry: https://registry.hub.docker.com/v2
