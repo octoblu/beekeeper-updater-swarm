@@ -12,6 +12,10 @@ panic() {
 
 main() {
   local tag="$(git describe --tags --exact --match 'v*.*.*')"
+  if [ -n "$BUILD_TAG" ]; then
+    echo "Using $BUILD_TAG tag"
+    tag="$BUILD_TAG"
+  fi
   if [ "$?" != "0" ]; then
     panic 'not a tagged commit'
   fi
