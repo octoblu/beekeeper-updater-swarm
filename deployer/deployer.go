@@ -68,6 +68,10 @@ func (deployer *Deployer) Run() error {
 }
 
 func (deployer *Deployer) shouldUpdateService(service swarm.Service) (bool, error) {
+	if service.Spec.Labels["octoblu.beekeeper.update"] != "true" {
+		debug("beekeeper update lable != true")
+		return false, nil
+	}
 	if getCurrentDockerURL(service) == "" {
 		debug("Could not get currentDockerURL for service", service.ID)
 		return false, nil
@@ -121,6 +125,8 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 	}
 	service.Spec.Labels["octoblu.beekeeper.lastDockerURL"] = dockerURL
 	service.Spec.Labels["octoblu.beekeeper.lastUpdatedAt"] = currentDate
+	service.Spec.UpdateConfig.Parallelism = getUpdateParallelism(service)
+	service.Spec.UpdateConfig.FailureAction = "pause"
 	err = dockerClient.ServiceUpdate(ctx, service.ID, service.Version, service.Spec, updateOpts)
 	if err != nil {
 		return err
@@ -191,6 +197,17 @@ func (deployer *Deployer) parseDockerURL(dockerURL string) (string, string, stri
 	}
 
 	return owner, repo, tag
+}
+
+func getUpdateParallelism(service swarm.Service) uint64 {
+	if service.Spec.Mode.Replicated == nil {
+		return 1
+	}
+	if service.Spec.Mode.Replicated.Replicas == nil {
+		return 1
+	}
+	replicas := *service.Spec.Mode.Replicated.Replicas
+	return (replicas / 10) + 1
 }
 
 func getCurrentDockerURL(service swarm.Service) string {
