@@ -174,7 +174,8 @@ func (deployer *Deployer) getLatestDockerURL(owner, repo string) (string, error)
 
 func (deployer *Deployer) parseDockerURL(dockerURL string) (string, string, string) {
 	var owner, repo, tag string
-	dockerURLParts := strings.Split(dockerURL, ":")
+	realDockerURL := strings.Split(dockerURL, "@")[0]
+	dockerURLParts := strings.Split(realDockerURL, ":")
 
 	if len(dockerURLParts) != 2 {
 		return "", "", ""
