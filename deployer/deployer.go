@@ -69,7 +69,7 @@ func (deployer *Deployer) Run() error {
 
 func (deployer *Deployer) shouldUpdateService(service swarm.Service) (bool, error) {
 	if service.Spec.Labels["octoblu.beekeeper.update"] != "true" {
-		debug("beekeeper update lable != true")
+		debug("beekeeper update label != true")
 		return false, nil
 	}
 	if getCurrentDockerURL(service) == "" {
@@ -125,6 +125,7 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 	}
 	service.Spec.Labels["octoblu.beekeeper.lastDockerURL"] = dockerURL
 	service.Spec.Labels["octoblu.beekeeper.lastUpdatedAt"] = currentDate
+	debug("About to deploy %s at %s", dockerURL, currentDate)
 	service.Spec.UpdateConfig.Parallelism = getUpdateParallelism(service)
 	service.Spec.UpdateConfig.FailureAction = "pause"
 	err = dockerClient.ServiceUpdate(ctx, service.ID, service.Version, service.Spec, updateOpts)
@@ -251,6 +252,7 @@ func doesDockerURLMatchCurrent(dockerURL string, service swarm.Service) bool {
 
 func doesDockerURLMatchLast(dockerURL string, service swarm.Service) bool {
 	lastDockerURL := getLastDockerURL(service)
+	debug("lastDockerURL = %s, dockerURL = %s", lastDockerURL, dockerURL)
 	if lastDockerURL == "" {
 		return false
 	}
