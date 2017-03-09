@@ -173,9 +173,13 @@ func (deployer *Deployer) getLatestDockerURL(owner, repo string) (string, error)
 	return metadata.DockerURL, nil
 }
 
+func getRealDockerURL(dockerURL string) string {
+	return strings.Split(dockerURL, "@")[0]
+}
+
 func (deployer *Deployer) parseDockerURL(dockerURL string) (string, string, string) {
 	var owner, repo, tag string
-	realDockerURL := strings.Split(dockerURL, "@")[0]
+	realDockerURL := getRealDockerURL(dockerURL)
 	dockerURLParts := strings.Split(realDockerURL, ":")
 
 	if len(dockerURLParts) != 2 {
@@ -213,7 +217,7 @@ func getUpdateParallelism(service swarm.Service) uint64 {
 }
 
 func getCurrentDockerURL(service swarm.Service) string {
-	return service.Spec.TaskTemplate.ContainerSpec.Image
+	return getRealDockerURL(service.Spec.TaskTemplate.ContainerSpec.Image)
 }
 
 func getLastUpdatedAt(service swarm.Service) (time.Time, error) {
