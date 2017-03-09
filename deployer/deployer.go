@@ -77,7 +77,7 @@ func (deployer *Deployer) shouldUpdateService(service swarm.Service) (bool, erro
 		return false, nil
 	}
 	if isUpdateInProcess(service) {
-		debug("Update already in progress", service.ID)
+		debug("Update already in progress, skipping update", service.ID)
 		return false, nil
 	}
 	return true, nil
@@ -244,6 +244,7 @@ func didLastUpdatePass(service swarm.Service) bool {
 
 func doesDockerURLMatchCurrent(dockerURL string, service swarm.Service) bool {
 	currentDockerURL := getCurrentDockerURL(service)
+	debug("currentDockerURL = %s, dockerURL = %s", currentDockerURL, dockerURL)
 	if currentDockerURL == "" {
 		return false
 	}
