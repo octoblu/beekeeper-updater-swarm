@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ var debug = De.Debug("beekeeper-updater-swarm:deployer")
 type Deployer struct {
 	dockerClient client.APIClient
 	beekeeperURI string
+	tags         string
 }
 
 // RequestMetadata is the metadata of the request
@@ -32,10 +34,11 @@ type RequestMetadata struct {
 }
 
 // New constructs a new deployer instance
-func New(dockerClient client.APIClient, beekeeperURI string) *Deployer {
+func New(dockerClient client.APIClient, beekeeperURI, tags string) *Deployer {
 	return &Deployer{
 		dockerClient: dockerClient,
 		beekeeperURI: beekeeperURI,
+		tags:         tags,
 	}
 }
 
@@ -89,7 +92,7 @@ func (deployer *Deployer) updateService(service swarm.Service) error {
 	if owner == "" || repo == "" {
 		return fmt.Errorf("Could not parse docker URL %v %v", currentDockerURL, service.ID)
 	}
-	dockerURL, err := deployer.getLatestDockerURL(owner, repo)
+	dockerURL, err := deployer.getLatestDeployment(owner, repo)
 	if err != nil {
 		return fmt.Errorf("Error getting latest docker URL for %v/%v: %v", owner, repo, err.Error())
 	}
@@ -136,14 +139,30 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 	return nil
 }
 
-func (deployer *Deployer) getLatestDockerURL(owner, repo string) (string, error) {
+func (deployer *Deployer) getBeekeeperURL(owner, repo string) (string, error) {
+	u, err := url.Parse(deployer.beekeeperURI)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	if deployer.tags != "" {
+		q.Set("tags", deployer.tags)
+	}
+	u.RawQuery = q.Encode()
+	return fmt.Sprint(u), nil
+}
+
+func (deployer *Deployer) getLatestDeployment(owner, repo string) (string, error) {
 	var metadata RequestMetadata
 
-	url := fmt.Sprintf("%s/deployments/%s/%s/latest", deployer.beekeeperURI, owner, repo)
+	u, err := deployer.getBeekeeperURL(owner, repo)
+	if err != nil {
+		return "", err
+	}
 
-	debug("get latest docker url %s", url)
+	debug("get latest docker url %s", u)
 
-	res, err := http.Get(url)
+	res, err := http.Get(u)
 
 	if err != nil {
 		debug("got error from beekeeper-service %v", err)

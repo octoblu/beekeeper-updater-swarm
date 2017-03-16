@@ -37,18 +37,24 @@ func main() {
 			EnvVar: "BEEKEEPER_URI",
 			Usage:  "Beekeeper uri, it should include authentication.",
 		},
+		cli.StringFlag{
+			Name:   "tags",
+			EnvVar: "TAGS",
+			Usage:  "Beekeeper tags, used to filter builds",
+		},
 	}
 	app.Run(os.Args)
 }
 
 func run(context *cli.Context) {
-	dockerURI, beekeeperURI := getOpts(context)
+	dockerURI, beekeeperURI, tags := getOpts(context)
 
 	dockerClient := getDockerClient(dockerURI)
 	debug("running version %v", version())
 	debug("BEEKEEPER_URI: %s", beekeeperURI)
 	debug("DOCKER_HOST: %s", dockerURI)
-	theDeployer := deployer.New(dockerClient, beekeeperURI)
+	debug("TAGS %s", tags)
+	theDeployer := deployer.New(dockerClient, beekeeperURI, tags)
 	sigTerm := make(chan os.Signal)
 	signal.Notify(sigTerm, syscall.SIGTERM)
 
@@ -75,9 +81,10 @@ func run(context *cli.Context) {
 	}
 }
 
-func getOpts(context *cli.Context) (string, string) {
+func getOpts(context *cli.Context) (string, string, string) {
 	dockerURI := context.String("docker-uri")
 	beekeeperURI := context.String("beekeeper-uri")
+	tags := context.String("tags")
 
 	if dockerURI == "" || beekeeperURI == "" {
 		cli.ShowAppHelp(context)
@@ -91,7 +98,7 @@ func getOpts(context *cli.Context) (string, string) {
 		os.Exit(1)
 	}
 
-	return dockerURI, beekeeperURI
+	return dockerURI, beekeeperURI, tags
 }
 
 func getDockerClient(dockerURI string) client.APIClient {
