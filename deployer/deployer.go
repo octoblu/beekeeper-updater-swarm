@@ -142,8 +142,8 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 }
 
 func (deployer *Deployer) getBeekeeperURL(owner, repo string) (string, error) {
-	url := fmt.Sprintf("%s/deployments/%s/%s/latest", deployer.beekeeperURI, owner, repo)
-	u, err := url.Parse(url)
+	repoUrl := fmt.Sprintf("%s/deployments/%s/%s/latest", deployer.beekeeperURI, owner, repo)
+	u, err := url.Parse(repoUrl)
 	if err != nil {
 		return "", err
 	}
