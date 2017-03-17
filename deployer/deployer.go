@@ -57,13 +57,15 @@ func (deployer *Deployer) Run() error {
 	for _, service := range services {
 		shouldUpdate, err := deployer.shouldUpdateService(service)
 		if err != nil {
-			return err
+			debug("error updating service %s - %v", service, err)
+			continue
 		}
 		debug("found service %s", getCurrentDockerURL(service))
 		if shouldUpdate {
 			err = deployer.updateService(service)
 			if err != nil {
-				return err
+				debug("error updating service %s - %v", service, err)
+				continue
 			}
 		}
 	}
@@ -140,7 +142,8 @@ func (deployer *Deployer) deploy(service swarm.Service, dockerURL string) error 
 }
 
 func (deployer *Deployer) getBeekeeperURL(owner, repo string) (string, error) {
-	u, err := url.Parse(deployer.beekeeperURI)
+	url := fmt.Sprintf("%s/deployments/%s/%s/latest", deployer.beekeeperURI, owner, repo)
+	u, err := url.Parse(url)
 	if err != nil {
 		return "", err
 	}
